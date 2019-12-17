@@ -49,7 +49,7 @@ def EA(input_Ea):
             conn.commit()
     finally:
         conn.close()
-    
+
 while True:
     print("1. 내용입력 2. 확인 3. 구매수량 4. 종료") #시작 메뉴
     print("\n")
