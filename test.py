@@ -107,11 +107,11 @@ def Residue(): #사용수량 컬럼 불러오기
                 #print("4")
                 index_count = 0
                 cursor.execute(sql6)#잔여수량확인
-                rows4=cursor.fetchall()
-
+                rows9=cursor.fetchall()
+                print(rows1)
                 for i in rows1:
                     print(i, end=' ')
-                    for j in rows4[index_count]:#잔여수량 tuple에서 0번 index부터 하나씩 출력하게 한다.
+                    for j in rows9[index_count]:#잔여수량 tuple에서 0번 index부터 하나씩 출력하게 한다.
                         print(j)
                         index_count = index_count + 1 #index 증가
             conn.commit()
