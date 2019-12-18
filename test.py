@@ -117,6 +117,9 @@ def test(): #사용수량 컬럼 불러오기
             else:
                 print("4")
                 index_count = 0
+                cursor.execute(sql6)#잔여수량확인
+                rows4=cursor.fetchall()
+
                 for i in rows1:
                     print(i, end=' ')
                     for j in rows4[index_count]:
@@ -140,7 +143,7 @@ while True:
     finally:
         conn.close()
 
-    print("1. 내용입력 2. 확인 3. 구매수량 4. 종료 5.test") #시작 메뉴
+    print("1. 내용입력 2. 확인 3. 구매수량 4. 종료") #시작 메뉴
     num_menu = int(input("번호를 입력해 주세요 : "))
     print("\n")
 
@@ -173,8 +176,5 @@ while True:
 
     elif(num_menu == 4): #종료
         sys.exit()
-
-    elif(num_menu == 5):
-        test()
 
     print("\n")
