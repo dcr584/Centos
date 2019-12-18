@@ -2,11 +2,12 @@ import pymysql.cursors
 import sys
 import operator
 
-a=0;
-b=0;
-Sum=0;
-count=0;
-count1=0;#입력 카운트
+num_1=0;    #사용수량 입력 받을 변수    
+num_2=0;    #구매수량 & 잔여수량 변수
+answer=0;   #잔여수량 계산 변수
+first_count = 0; #처음 실행 카운터
+input_count=0;   #입력 카운트
+index_count = 0; #잔여수량 index 카운터
 
 sql1 = 'select * from Newbie.Content'#사용자 입력 선택
 sql2 = "insert into Newbie.Content(DATE, NAME, NOTE, C_NUM, P_TIME, USE_N)values(%s, %s, %s, %s, %s, %s)"#사용자 입력
@@ -32,12 +33,12 @@ def select():   #내용확인
         conn.close()
 
 def Content(input_date, input_name, input_note, input_c_num, input_p_time, input_use_n): #사용자 입력
-    global count1
+    global input_count #전역변수 사용
     conn = pymysql.connect(host='localhost', user='root', password='', charset='utf8mb4') 
     try:
         with conn.cursor() as cursor:
             cursor.execute(sql2, (input_date, input_name, input_note, input_c_num, input_p_time, input_use_n))
-            count1=count1+1
+            input_count = input_count + 1 #입력 카운트 증가
             conn.commit()
     finally:
         conn.close()
@@ -67,58 +68,60 @@ def test(): #사용수량 컬럼 불러오기
             cursor.execute(sql6)#잔여수량확인
             rows4=cursor.fetchall()
             
-            global count#지역 변수에서 사용하기 위해global 선언
-            
-            print(rows2)
-            print(count)
-            if(rows4 == ()):   #잔여수량이 비어있을 경우
-                print("if")
+            global first_count #지역 변수에서 사용하기 위해global 선언
+            if(rows2 == ()):
+                    for i in rows1:
+                        print(i, end=' ')
+                        for j in rews4:
+                            print(j)
+            elif(rows4 == ()):   #잔여수량이 비어있을 경우
                 #sql6번을 가져와서 sql7번에 입력
-                a = rows2[0]#사용수량
-                b = rows3[0]#구매수량
-                for i in range(len(a)):
-                    Sum = int(b[0]) - int(a[0])#구매수량 - 사용수량
+                print("1")
+                num_1 = rows2[0]#사용수량
+                num_2 = rows3[0]#구매수량
+                for i in range(len(num_1)):
+                    Sum = int(num_2[0]) - int(num_1[0])#구매수량 - 사용수량
+                
                 cursor.execute(sql7, (Sum))#잔여수량 입력
                 rows5=cursor.fetchall()
-
+        
                 cursor.execute(sql6)#잔여수량확인
                 rows7=cursor.fetchall()
-                count=count+1;#처음이 아니라는 입력값을 count 증가시킴
+                
+                first_count = first_count + 1;#처음이 아니라는 입력값을 count 증가시킴
                 for i in rows1:
                     print(i, end=' ')
-                    for j in rows7:
-                        print(j)
-            
-            elif(rows2 == ()):
-                for i in rows1:
-                    print(i, end=' ')
-                    for j in rows4:
-                        print(j)
-
-            elif(count < count1 ):#사용자가 입력값이공백일 때까지
-                print("elif")
-                a = rows2[count]#사용수량
-                b = rows4[count-1]#잔여수량    
-                print(b)
-                #print("2"+b[count])
-                #print("3"+b[count-1])
-                for i in range(len(a)):
-                    Sum = int(b) - int(a[count])
+                    for j in rows7[0]:
+                       print(j)
+                        
+            elif(first_count < input_count):#사용자 입력이 없을 때 까지실행
+                print("3")
+                num_1 = rows2[first_count]#사용수량
+                num_2 = rows4[first_count-1]#잔여수량
+                print(num_1)
+                for i in range(len(num_1)):
+                    Sum = int(num_2[0]) - int(num_1[0])
                 cursor.execute(sql7, (Sum))#잔여수량 입력
                 rows6=cursor.fetchall()
-                count=count+1#출력 후 count 증가
+
+                cursor.execute(sql6)#잔여수량확인
+                rows8=cursor.fetchall()
+                first_count = first_count + 1#출력 후 count 증가
+
+                index_count = 0 #잔여수량 index 카운터 변수
                 for i in rows1:
                     print(i, end=' ')
-                    for j in rows6:
+                    for j in rows8[index_count]:
                         print(j)
+                        index_count = index_count + 1 #index 증가
             else:
-                print("else")
+                print("4")
+                index_count = 0
                 for i in rows1:
                     print(i, end=' ')
-                    for j in rows4:
+                    for j in rows4[index_count]:
                         print(j)
-
-
+                        index_count = index_count + 1 #index 증가
             conn.commit()
     finally:
         conn.close()
