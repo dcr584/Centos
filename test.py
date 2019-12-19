@@ -7,6 +7,7 @@ answer=0;   #잔여수량 계산 변수
 first_count = 0; #처음 실행 카운터
 input_count=0;   #입력 카운트
 index_count = 0; #잔여수량 index 카운터
+check = False
 
 sql1 = 'select * from Newbie.Content'#사용자 입력 선택
 sql2 = "insert into Newbie.Content(DATE, NAME, NOTE, C_NUM, P_TIME, USE_N)values(%s, %s, %s, %s, %s, %s)"#사용자 입력
@@ -17,12 +18,43 @@ sql6 = 'select RESIDUE from Newbie.Residue' #잔여수량
 sql7 = "insert into Newbie.Residue(RESIDUE)values(%s)"  #잔여수량 입력
 
 def Content(input_date, input_name, input_note, input_c_num, input_p_time, input_use_n): #사용자 입력
+    global first_count
     global input_count #전역변수 사용
+    global check
     conn = pymysql.connect(host='localhost', user='root', password='', charset='utf8mb4') 
     try:
         with conn.cursor() as cursor:
             cursor.execute(sql2, (input_date, input_name, input_note, input_c_num, input_p_time, input_use_n))
             input_count = input_count + 1 #입력 카운트 증가
+            check = True
+
+            cursor.execute(sql4)#구매수량확인
+            rows2=cursor.fetchall()
+
+            cursor.execute(sql5)#구매수량확인
+            rows3=cursor.fetchall()
+
+            cursor.execute(sql6)#잔여수량확인
+            rows4=cursor.fetchall()
+            
+            if(rows4 == ()):
+                num_1 = rows2[0]#사용수량
+                num_2 = rows3[0]#구매수량
+
+                for i in range(len(num_1)):
+                    Sum = int(num_2[0]) - int(num_1[0])
+
+                cursor.execute(sql7, (Sum))#잔여수량 입력
+                first_count = first_count + 1
+            else:
+                num_1 = rows2[first_count]#사용수량
+                num_2 = rows4[first_count-1]#잔여수량
+            
+                for i in range(len(num_1)):#사용수량 사이즈만큼
+                    Sum = int(num_2[0]) - int(num_1[0])#잔여수량 - 사용수량
+                               
+                cursor.execute(sql7, (Sum))#잔여수량 입력
+                first_count = first_count + 1
             conn.commit()
     finally:
         conn.close()
@@ -53,16 +85,17 @@ def Residue(): #사용수량 컬럼 불러오기
             rows4=cursor.fetchall()
             
             global first_count #지역 변수에서 사용하기 위해global 선언
-            
+            global input_count
+            global check
+
             if(rows2 == ()):#사용수량에 입력이 없을 경우
-                #print("1")
-                    for i in rows1:
-                        print(i, end=' ')
-                        for j in rews4:
-                            print(j)
+                print("1")
+                for i in rows1:
+                    print(i, end=' ')
+                    for j in rews4:
+                        print(j)
 
             elif(rows4 == ()):   #잔여수량이 비어있을 경우
-                #print("2")
                 num_1 = rows2[0]#사용수량---데이터 베이스의 tuple 값을 가져와 num_1 대입
                 num_2 = rows3[0]#구매수량---데이터 베이스의 tuple 값을 가져와 num_2 대입
 
@@ -70,7 +103,6 @@ def Residue(): #사용수량 컬럼 불러오기
                     Sum = int(num_2[0]) - int(num_1[0])#구매수량 - 사용수량---(('100'),) 이러한 형태를 띄기 때문에 [0]번 인덱스의 값을 넣어준다.
                 
                 cursor.execute(sql7, (Sum))#잔여수량 입력
-                rows5=cursor.fetchall()
         
                 cursor.execute(sql6)#잔여수량확인
                 rows7=cursor.fetchall()
@@ -81,39 +113,71 @@ def Residue(): #사용수량 컬럼 불러오기
                     print(i, end=' ')#end=' ' 자동 줄바꿈 방지
                     for j in rows7[0]:#구매수량 - 사용수량 한 값을 출력한다.
                        print(j)
-                        
-            elif(first_count < input_count):#사용자가 입력을 할때마다 input_count가 카운트된다. 입력 카운트보다 작을 때 까지 실행하게 한다.
-                #print("3")
+
+            elif(first_count == 0):
+                #마지막 잔여수량 index 찾아오기
+                first_count = len(rows4)
+                input_count = len(rows1)
+                
+                index_count = 0#잔여수량 index 카운터 변수
+                
+                for i in rows1:
+                    print(i, end=' ')
+                    for j in rows4[index_count]:#잔여수량 tuple에서 0번 index부터 하니씩 출력하게 한다.
+                        print(j)
+                        index_count = index_count + 1#index 증가
+                
+            elif(first_count < input_count):#사용자가 입력을 할때마다 input_count가 카운트된다. 입력 카운트보다 작을 때 까지 실행하게 한다.    프로그램 재실행 시 index오류 발생
                 num_1 = rows2[first_count]#사용수량
                 num_2 = rows4[first_count-1]#잔여수량
                 
-                for i in range(len(num_1)):#사용수량 사이즈만큼
-                    Sum = int(num_2[0]) - int(num_1[0])#잔여수량 - 사용수량
-                cursor.execute(sql7, (Sum))#잔여수량 입력
-                rows6=cursor.fetchall()
+                print(num_2[0])
+                print(num_1[0])
+                
+                if(check == True):
+                    print(check)
+                    print(num_2[0])
+                    print(num_1[0])
 
-                cursor.execute(sql6)#잔여수량확인
-                rows8=cursor.fetchall()
-                first_count = first_count + 1#출력 후 count 증가
+                    for i in range(len(num_1)):#사용수량 사이즈만큼
+                        Sum = int(num_2[0]) - int(num_1[0])#잔여수량 - 사용수량
+                    cursor.execute(sql7, (Sum))#잔여수량 입력
+                    
+                    cursor.execute(sql6)#잔여수량확인
+                    rows8=cursor.fetchall()
+                    
+                    first_count = first_count + 1#출력 후 count 증가
+                    index_count = 0 #잔여수량 index 카운터 변수
 
-                index_count = 0 #잔여수량 index 카운터 변수
+                    for i in rows1:
+                        print(i, end=' ')
+                        for j in rows8[index_count]:#잔여수량 tuple에서 0번index부터 하나씩 출력하게 한다.
+                            print(j)
+                            index_count = index_count + 1 #index 증가
+                else:
+                    index_count = 0
 
-                for i in rows1:
-                    print(i, end=' ')
-                    for j in rows8[index_count]:#잔여수량 tuple에서 0번index부터 하나씩 출력하게 한다.
-                        print(j)
-                        index_count = index_count + 1 #index 증가
+                    for i in rows1:
+                        print(i, end = ' ')
+                        for j in rows4[index_count]:
+                            print(j)
+                            index_count = index_count + 1
+                            if(index_count == len(rows4)):
+                                index_count = 0
             else:
-                #print("4")
                 index_count = 0
+                
                 cursor.execute(sql6)#잔여수량확인
                 rows9=cursor.fetchall()
-                print(rows1)
-                for i in rows1:
-                    print(i, end=' ')
-                    for j in rows9[index_count]:#잔여수량 tuple에서 0번 index부터 하나씩 출력하게 한다.
-                        print(j)
-                        index_count = index_count + 1 #index 증가
+                
+                if(index_count - 1 < index_count):#index의 길이보다 -1만큼만 출력되게 한다.                    
+                    for i in rows1:
+                        print(i, end=' ')
+                        for j in rows9[index_count]:#잔여수량 tuple에서 0번 index부터 하나씩 출력하게 한다.
+                            print(j)
+                            index_count = index_count + 1 #index 증가
+                            if(index_count == len(rows9)):
+                                index_count = 0
             conn.commit()
     finally:
         conn.close()
